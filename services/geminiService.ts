@@ -41,7 +41,7 @@ export const generatePerfectPrompt = async (
       2. Do not just list keywords at the end; weave them into the description naturally where possible.
       3. For the 'imagePrompt', focus on texture, lighting, composition, and fidelity.
       4. For the 'videoPrompt', take the same concept but emphasize motion, camera movement, temporal consistency, and physics.
-      5. Provide a short explanation of your choices.
+      5. Provide a short explanation of the choices.
     `;
 
     const response = await ai.models.generateContent({
@@ -80,7 +80,6 @@ export const suggestAttributes = async (
   availableOptions: { id: string; label: string; description: string }[]
 ): Promise<string[]> => {
   try {
-    // Flatten options for the model to read efficiently
     const optionsText = availableOptions.map(o => `ID: ${o.id} | Label: ${o.label} | Desc: ${o.description}`).join("\n");
 
     const prompt = `
@@ -101,7 +100,7 @@ export const suggestAttributes = async (
       config: {
         responseMimeType: "application/json",
         responseSchema: SUGGESTION_SCHEMA,
-        temperature: 0.5, // Lower temperature for more deterministic selection
+        temperature: 0.5,
       },
     });
 
@@ -113,5 +112,73 @@ export const suggestAttributes = async (
   } catch (error) {
     console.error("Error suggesting attributes:", error);
     return [];
+  }
+};
+
+export const generateImage = async (
+  prompt: string,
+  aspectRatio: "1:1" | "3:4" | "4:3" | "9:16" | "16:9",
+  isComic: boolean,
+  attributes: string[] = [],
+  inputImageBase64?: string,
+  resolution: '1K' | '2K' = '1K'
+): Promise<string> => {
+  try {
+    const styleContext = attributes.length > 0 ? ` Art Style, Lighting & Atmosphere details: ${attributes.join(", ")}` : "";
+    
+    let finalPrompt = "";
+    if (isComic) {
+      finalPrompt = `Create a high-quality comic book page layout with multiple panels based on the following script/description. Ensure clear visual storytelling, speech bubbles where appropriate, and a consistent style.${styleContext} \n\nScript: ${prompt}`;
+    } else {
+      finalPrompt = `${prompt}.${styleContext}`;
+    }
+
+    // If upscaling/magnifying (2K), use Pro model. Otherwise use Flash Image.
+    const model = resolution === '2K' ? 'gemini-3-pro-image-preview' : 'gemini-2.5-flash-image';
+
+    const parts: any[] = [];
+
+    // If there is an input image, it's an edit or upscale request
+    if (inputImageBase64) {
+      // Basic strip of prefix if present
+      const cleanBase64 = inputImageBase64.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+      parts.push({
+        inlineData: {
+          data: cleanBase64,
+          mimeType: "image/png", 
+        }
+      });
+    }
+
+    parts.push({ text: finalPrompt });
+
+    const config: any = {
+      imageConfig: {
+        aspectRatio: aspectRatio,
+      }
+    };
+
+    // Only 'gemini-3-pro-image-preview' supports imageSize
+    if (resolution === '2K') {
+      config.imageConfig.imageSize = '2K';
+    }
+
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: { parts: parts },
+      config: config
+    });
+
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData && part.inlineData.data) {
+        return part.inlineData.data;
+      }
+    }
+    
+    throw new Error("No image data found in response");
+
+  } catch (error) {
+    console.error("Error generating image:", error);
+    throw error;
   }
 };

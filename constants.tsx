@@ -8,6 +8,39 @@ const SunIcon = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" s
 const FilmIcon = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" /></svg>;
 const BookIcon = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>;
 
+export const VISUAL_TEMPLATES = [
+  { 
+    id: 'char_concept', 
+    label: 'Character Concept', 
+    prompt: 'Detailed character concept art of a [ROLE/CLASS], wearing [OUTFIT], standing in a [SETTING], [MOOD] expression, full body shot, neutral background, high fidelity.' 
+  },
+  { 
+    id: 'env_fantasy', 
+    label: 'Fantasy Environment', 
+    prompt: 'A majestic [LANDSCAPE TYPE] with floating islands, cascading waterfalls, bioluminescent flora, golden hour lighting, epic scale, highly detailed matte painting.' 
+  },
+  { 
+    id: 'cyber_city', 
+    label: 'Cyberpunk City', 
+    prompt: 'Futuristic cyberpunk city street level, neon signs reflecting in rain puddles, towering skyscrapers, holographic ads, bustling crowd, cinematic lighting, 8k.' 
+  },
+  { 
+    id: 'logo_minimal', 
+    label: 'Minimalist Logo', 
+    prompt: 'A minimalist vector logo of a [ANIMAL/OBJECT], flat design, geometric shapes, orange and white color palette, white background, professional branding.' 
+  },
+  { 
+    id: 'comic_page', 
+    label: 'Comic Page Script', 
+    prompt: 'Panel 1: Wide shot of a detective standing in a rainy alleyway, looking at a clue.\nPanel 2: Close up on the clue, a mysterious glowing amulet.\nPanel 3: The detective looks up, surprised, as a shadow looms over them.' 
+  },
+  { 
+    id: 'isometric', 
+    label: 'Isometric Room', 
+    prompt: 'Isometric view of a cozy gamer bedroom, detailed computer setup, rgb lighting, messy bed, posters on wall, 3d render style, blender cycles.' 
+  },
+];
+
 export const PROMPT_CATEGORIES: PromptCategory[] = [
   {
     id: 'style',
