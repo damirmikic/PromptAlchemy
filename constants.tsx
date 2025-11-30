@@ -50,12 +50,25 @@ export const PROMPT_CATEGORIES: PromptCategory[] = [
       { id: 'photorealistic', label: 'Photorealistic', value: 'Photorealistic, 8k, highly detailed, raw photo, Fujifilm XT3', icon: <CameraIcon /> },
       { id: 'cyberpunk', label: 'Cyberpunk', value: 'Cyberpunk, neon lights, high tech low life, futuristic, blade runner aesthetic', icon: <PaletteIcon /> },
       { id: 'anime', label: 'Anime / Manga', value: 'Anime style, Studio Ghibli inspired, cel shaded, vibrant colors, Makoto Shinkai style', icon: <PaletteIcon /> },
+      
+      // Comic Styles - American
       { id: 'comic_modern', label: 'Modern Comic', value: 'Modern comic book style, detailed inking, vibrant digital coloring, Marvel/DC style, dynamic', icon: <BookIcon /> },
       { id: 'comic_noir', label: 'Noir Graphic Novel', value: 'Noir graphic novel style, Frank Miller aesthetic, high contrast black and white, splashes of red, gritty', icon: <BookIcon /> },
       { id: 'comic_vintage', label: 'Vintage Comic', value: 'Golden Age comic style, halftone dots, CMYK printing offset, retro 1950s aesthetic, yellowed paper texture', icon: <BookIcon /> },
+      { id: 'comic_silver', label: 'Silver Age (Kirby)', value: 'Silver Age comic style, Jack Kirby dots, dynamic foreshortening, bold primary colors, retro superhero aesthetic', icon: <BookIcon /> },
+      { id: 'comic_mignola', label: 'Mignola / Gothic', value: 'Mike Mignola style, heavy shadows, angular shapes, high contrast, muted colors, gothic atmosphere', icon: <BookIcon /> },
+
+      // Comic Styles - European
+      { id: 'comic_bd', label: 'Franco-Belgian (BD)', value: 'Franco-Belgian comic style, Bande Dessinée, clean lines, detailed backgrounds, Spirou/Tintin aesthetic, vibrant flat colors', icon: <BookIcon /> },
       { id: 'comic_moebius', label: 'Moebius / Sci-Fi', value: 'Moebius style, Jean Giraud, intricate line work, surreal sci-fi landscapes, pastel flat colors', icon: <BookIcon /> },
+      { id: 'comic_heavy_metal', label: 'Heavy Metal (80s)', value: 'Heavy Metal magazine style, 1980s sci-fi, intricate details, airbrush texture, Enki Bilal or Moebius influence, surreal', icon: <BookIcon /> },
       { id: 'comic_ligne_claire', label: 'Ligne Claire', value: 'Ligne Claire style, Hergé, clean uniform lines, flat colors, no hatching, precise perspective', icon: <BookIcon /> },
+      { id: 'comic_fumetti', label: 'Italian Fumetti', value: 'Italian Fumetti style, Bonelli comics, high contrast black and white ink, realistic proportions, dynamic shading', icon: <BookIcon /> },
+
+      // Comic Styles - Manga
+      { id: 'comic_manga_shonen', label: 'Shonen Manga', value: 'Shonen Manga style, dynamic action lines, screentones, expressive characters, black and white ink', icon: <BookIcon /> },
       { id: 'comic_manga_horror', label: 'Horror Manga', value: 'Junji Ito style, intricate horror manga, spiraling details, disturbing realism, black and white ink', icon: <BookIcon /> },
+      
       { id: 'oil_painting', label: 'Oil Painting', value: 'Oil painting, thick brushstrokes, impasto, classical art style', icon: <PaletteIcon /> },
       { id: '3d_render', label: '3D Render', value: '3D render, Unreal Engine 5, Octane Render, ray tracing, isometric', icon: <PaletteIcon /> },
       { id: 'watercolor', label: 'Watercolor', value: 'Watercolor, soft edges, pastel colors, wet-on-wet technique, artistic', icon: <PaletteIcon /> },

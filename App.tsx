@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PROMPT_CATEGORIES } from './constants';
 import { OptionButton } from './components/OptionButton';
 import { ResultCard } from './components/ResultCard';
@@ -7,13 +7,70 @@ import { generatePerfectPrompt, suggestAttributes } from './services/geminiServi
 import { GeneratedResult, GenerationStatus } from './types';
 
 function App() {
+  const [hasKey, setHasKey] = useState(false);
   const [activeTab, setActiveTab] = useState<'alchemy' | 'visual'>('alchemy');
   const [basePrompt, setBasePrompt] = useState('');
+  const [inputImage, setInputImage] = useState<string | null>(null);
   const [selectedDetails, setSelectedDetails] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState<GenerationStatus>('idle');
   const [suggestionStatus, setSuggestionStatus] = useState<'idle' | 'loading'>('idle');
   const [result, setResult] = useState<GeneratedResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkKey = async () => {
+      if ((window as any).aistudio && await (window as any).aistudio.hasSelectedApiKey()) {
+        setHasKey(true);
+      }
+    };
+    checkKey();
+  }, []);
+
+  const handleSelectKey = async () => {
+    if ((window as any).aistudio) {
+      await (window as any).aistudio.openSelectKey();
+      // Assume success to avoid race condition
+      setHasKey(true);
+    }
+  };
+
+  // Handle Ctrl+V paste
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      // Only handle paste if we are in the Alchemy tab
+      if (activeTab !== 'alchemy') return;
+      
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of items) {
+        if (item.type.indexOf('image') !== -1) {
+          const blob = item.getAsFile();
+          if (blob) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              setInputImage(event.target?.result as string);
+            };
+            reader.readAsDataURL(blob);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [activeTab]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setInputImage(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const toggleDetail = (value: string) => {
     const newSet = new Set(selectedDetails);
@@ -59,7 +116,8 @@ function App() {
   };
 
   const handleGenerate = async () => {
-    if (!basePrompt.trim()) return;
+    // Valid if text OR image is provided
+    if (!basePrompt.trim() && !inputImage) return;
 
     setStatus('generating');
     setErrorMsg(null);
@@ -68,7 +126,8 @@ function App() {
     try {
       const generatedData = await generatePerfectPrompt(
         basePrompt,
-        Array.from(selectedDetails)
+        Array.from(selectedDetails),
+        inputImage || undefined
       );
       setResult(generatedData);
       setStatus('success');
@@ -78,6 +137,39 @@ function App() {
       setErrorMsg("Failed to generate prompt. Please check your API Key and try again.");
     }
   };
+
+  if (!hasKey) {
+    return (
+      <div className="min-h-screen bg-dark-900 text-gray-200 font-sans flex items-center justify-center p-4">
+        <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-900/20 via-dark-900 to-dark-900 z-0"></div>
+        
+        <div className="relative z-10 max-w-lg w-full bg-dark-800 border border-brand-500/30 rounded-2xl p-8 shadow-2xl text-center space-y-6">
+          <div className="inline-flex items-center justify-center p-4 bg-brand-500/10 rounded-full ring-1 ring-brand-500/30">
+            <svg className="w-12 h-12 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11.536 19.464a3 3 0 01-.879.879l-.667.667a3 3 0 01-4.242-4.242l.667-.667a3 3 0 01.879-.879l4.722-4.722a6 6 0 015.743-7.744A2 2 0 0115 7zm0 0v.01" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-200 to-brand-500">
+            Welcome to PromptAlchemy
+          </h1>
+          <p className="text-gray-400">
+            To use the advanced Gemini models (including High-Res Image Generation), you must select a valid API Key associated with a paid Google Cloud Project.
+          </p>
+          <div className="space-y-4 pt-4">
+            <button
+              onClick={handleSelectKey}
+              className="w-full py-3.5 rounded-xl font-bold text-lg bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-lg hover:from-brand-500 hover:to-brand-400 hover:shadow-brand-500/25 transition-all"
+            >
+              Select API Key
+            </button>
+            <p className="text-xs text-gray-500">
+              Don't have a paid project? <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:underline">View Billing Documentation</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-dark-900 text-gray-200 selection:bg-brand-500/30 font-sans">
@@ -139,14 +231,14 @@ function App() {
               
               {/* Input Section */}
               <section className="space-y-3">
-                <label htmlFor="base-prompt" className="flex items-center justify-between text-sm font-medium text-brand-400 uppercase tracking-wider">
-                  <span>1. The Concept</span>
-                  <button 
+                <div className="flex items-center justify-between text-sm font-medium text-brand-400 uppercase tracking-wider">
+                   <span>1. The Concept</span>
+                   <button 
                     onClick={handleMagicSuggest}
-                    disabled={!basePrompt.trim() || suggestionStatus === 'loading'}
+                    disabled={(!basePrompt.trim() && !inputImage) || suggestionStatus === 'loading'}
                     className={`
                       flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold transition-all
-                      ${!basePrompt.trim() 
+                      ${(!basePrompt.trim() && !inputImage)
                         ? 'text-gray-600 bg-dark-800 cursor-not-allowed' 
                         : 'text-purple-200 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30'
                       }
@@ -159,13 +251,45 @@ function App() {
                     )}
                     Magic Auto-Select
                   </button>
-                </label>
+                </div>
+
+                {/* Image Upload Area */}
+                <div className={`
+                  border-2 border-dashed rounded-2xl transition-all overflow-hidden relative
+                  ${inputImage ? 'border-brand-500/50 bg-brand-900/10' : 'border-dark-700 bg-dark-800/50 hover:border-dark-600'}
+                `}>
+                  {inputImage ? (
+                    <div className="p-4 flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden border border-brand-500/30 bg-black flex-shrink-0">
+                        <img src={inputImage} alt="Input" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-grow">
+                        <h4 className="text-sm font-medium text-brand-300">Visual Reference Active</h4>
+                        <p className="text-xs text-gray-500">Generating prompt based on this image + text.</p>
+                      </div>
+                      <button 
+                        onClick={() => setInputImage(null)}
+                        className="p-2 hover:bg-dark-700 rounded-full text-gray-400 hover:text-red-400 transition-colors"
+                      >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center py-6 cursor-pointer group">
+                       <svg className="w-8 h-8 text-gray-600 group-hover:text-brand-500 transition-colors mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                       <span className="text-xs text-gray-500 group-hover:text-brand-400 font-medium">Paste image (Ctrl+V) or Click to Upload</span>
+                       <span className="text-[10px] text-gray-600 mt-1">To generate video prompts from a static image</span>
+                       <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                    </label>
+                  )}
+                </div>
+
                 <div className="relative group">
                   <textarea
                     id="base-prompt"
                     value={basePrompt}
                     onChange={(e) => setBasePrompt(e.target.value)}
-                    placeholder="e.g. A futuristic samurai walking through a rainy city..."
+                    placeholder={inputImage ? "Add extra context (optional)... e.g. 'Make it explode'" : "e.g. A futuristic samurai walking through a rainy city..."}
                     className="w-full h-32 bg-dark-800 border border-dark-700 rounded-2xl p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all shadow-lg resize-none"
                   />
                   <div className="absolute bottom-3 right-3 text-xs text-gray-500">
@@ -226,10 +350,10 @@ function App() {
                 {/* Generate Button */}
                 <button
                   onClick={handleGenerate}
-                  disabled={status === 'generating' || !basePrompt.trim()}
+                  disabled={status === 'generating' || (!basePrompt.trim() && !inputImage)}
                   className={`
                     w-full py-4 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-3 transition-all duration-300
-                    ${status === 'generating' || !basePrompt.trim()
+                    ${status === 'generating' || (!basePrompt.trim() && !inputImage)
                       ? 'bg-dark-700 text-gray-500 cursor-not-allowed'
                       : 'bg-gradient-to-r from-brand-600 to-brand-500 text-white hover:from-brand-500 hover:to-brand-400 hover:shadow-brand-500/25 hover:-translate-y-1'
                     }
@@ -241,12 +365,12 @@ function App() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Synthesizing...
+                      {inputImage ? 'Analyzing Image...' : 'Synthesizing...'}
                     </>
                   ) : (
                     <>
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-                      Transmute Prompt
+                      {inputImage ? 'Create Prompts from Image' : 'Transmute Prompt'}
                     </>
                   )}
                 </button>
@@ -265,7 +389,9 @@ function App() {
                 
                 {!result && status === 'idle' && (
                   <div className="hidden xl:flex items-center justify-center h-64 border-2 border-dashed border-dark-700 rounded-2xl text-gray-600 text-sm p-8 text-center">
-                    Your generated prompts will appear here after the alchemy is complete.
+                    {inputImage 
+                      ? "Ready to extract video prompts from your image." 
+                      : "Your generated prompts will appear here after the alchemy is complete."}
                   </div>
                 )}
               </div>
