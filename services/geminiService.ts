@@ -26,7 +26,6 @@ export const generatePerfectPrompt = async (
   imageBase64?: string
 ): Promise<GeneratedResult> => {
   try {
-    // Initialize client here to ensure it picks up the latest API Key from the environment
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     const detailsString = selectedDetails.join(", ");

@@ -7,7 +7,6 @@ import { generatePerfectPrompt, suggestAttributes } from './services/geminiServi
 import { GeneratedResult, GenerationStatus } from './types';
 
 function App() {
-  const [hasKey, setHasKey] = useState(false);
   const [activeTab, setActiveTab] = useState<'alchemy' | 'visual'>('alchemy');
   const [basePrompt, setBasePrompt] = useState('');
   const [inputImage, setInputImage] = useState<string | null>(null);
@@ -16,23 +15,6 @@ function App() {
   const [suggestionStatus, setSuggestionStatus] = useState<'idle' | 'loading'>('idle');
   const [result, setResult] = useState<GeneratedResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  useEffect(() => {
-    const checkKey = async () => {
-      if ((window as any).aistudio && await (window as any).aistudio.hasSelectedApiKey()) {
-        setHasKey(true);
-      }
-    };
-    checkKey();
-  }, []);
-
-  const handleSelectKey = async () => {
-    if ((window as any).aistudio) {
-      await (window as any).aistudio.openSelectKey();
-      // Assume success to avoid race condition
-      setHasKey(true);
-    }
-  };
 
   // Handle Ctrl+V paste
   useEffect(() => {
@@ -137,39 +119,6 @@ function App() {
       setErrorMsg("Failed to generate prompt. Please check your API Key and try again.");
     }
   };
-
-  if (!hasKey) {
-    return (
-      <div className="min-h-screen bg-dark-900 text-gray-200 font-sans flex items-center justify-center p-4">
-        <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-900/20 via-dark-900 to-dark-900 z-0"></div>
-        
-        <div className="relative z-10 max-w-lg w-full bg-dark-800 border border-brand-500/30 rounded-2xl p-8 shadow-2xl text-center space-y-6">
-          <div className="inline-flex items-center justify-center p-4 bg-brand-500/10 rounded-full ring-1 ring-brand-500/30">
-            <svg className="w-12 h-12 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11.536 19.464a3 3 0 01-.879.879l-.667.667a3 3 0 01-4.242-4.242l.667-.667a3 3 0 01.879-.879l4.722-4.722a6 6 0 015.743-7.744A2 2 0 0115 7zm0 0v.01" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-200 to-brand-500">
-            Welcome to PromptAlchemy
-          </h1>
-          <p className="text-gray-400">
-            To use the advanced Gemini models (including High-Res Image Generation), you must select a valid API Key associated with a paid Google Cloud Project.
-          </p>
-          <div className="space-y-4 pt-4">
-            <button
-              onClick={handleSelectKey}
-              className="w-full py-3.5 rounded-xl font-bold text-lg bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-lg hover:from-brand-500 hover:to-brand-400 hover:shadow-brand-500/25 transition-all"
-            >
-              Select API Key
-            </button>
-            <p className="text-xs text-gray-500">
-              Don't have a paid project? <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:underline">View Billing Documentation</a>
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-dark-900 text-gray-200 selection:bg-brand-500/30 font-sans">
